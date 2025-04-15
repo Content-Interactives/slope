@@ -50,6 +50,7 @@ const Slope = () => {
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const gridRef = useRef(null);
   const riseRef = useRef(8);
   const runRef = useRef(5);
@@ -68,6 +69,7 @@ const Slope = () => {
   };
 
   const handleClick = () => {
+    setIsAnimating(true);
     // Step 1: Shrink and remove initial button
     setIsButtonShrinking(true);
     setTimeout(() => {
@@ -83,6 +85,7 @@ const Slope = () => {
           setShowText(true);
           setTimeout(() => {
             setShowContinue(true);
+            setIsAnimating(false);
           }, 1500);
         }, 700);
       }, 800);
@@ -90,6 +93,7 @@ const Slope = () => {
   };
 
   const handleContinue = () => {
+    setIsAnimating(true);
     // Step 3: Shrink and remove initial text and continue button
     setIsContinueShrinking(true);
     setTimeout(() => {
@@ -133,6 +137,7 @@ const Slope = () => {
               // Step 6: Show second continue button
               setTimeout(() => {
                 setShowSecondContinue(true);
+                setIsAnimating(false);
               }, 500);
             }, 500);
           }, 800);
@@ -142,6 +147,7 @@ const Slope = () => {
   };
 
   const handleSecondContinue = () => {
+    setIsAnimating(true);
     // Shrink and remove all elements
     setIsRiseLabelShrinking(true);
     setIsRunLabelShrinking(true);
@@ -158,6 +164,7 @@ const Slope = () => {
           setIsNumbersMoving(true);
           setTimeout(() => {
             setShowExploreButton(true);
+            setIsAnimating(false);
           }, 800);
         }, 300);
       }, 300);
@@ -268,6 +275,7 @@ const Slope = () => {
   }, [isDragging, dragIndex]);
 
   const handleExploreClick = () => {
+    setIsAnimating(true);
     setShowExploreButton(false);
     setShowInstructionText(true);
     setIsDraggable(true);
@@ -282,12 +290,58 @@ const Slope = () => {
     const run = Math.abs(points[1].x - points[0].x);
     setCurrentRise(rise);
     setCurrentRun(run);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
   };
 
   const x1 = points[0].x * 20;
   const y1 = (13 - points[0].y) * 20;
   const x2 = points[1].x * 20;
   const y2 = (13 - points[1].y) * 20;
+
+  const handleReset = () => {
+    // Reset all states to initial values
+    setShowButton(true);
+    setIsButtonShrinking(false);
+    setShowPoints(false);
+    setShowLine(false);
+    setShowText(false);
+    setShowFullText(true);
+    setShowContinue(false);
+    setIsContinueShrinking(false);
+    setShowHorizontalLine(false);
+    setShowVerticalLine(false);
+    setShowRunLabel(false);
+    setShowRiseLabel(false);
+    setIsRiseLabelShrinking(false);
+    setIsRunLabelShrinking(false);
+    setShowRunNumbers([false, false, false, false, false]);
+    setShowRiseNumbers([false, false, false, false, false, false, false, false]);
+    setIsRunNumbersShrinking(false);
+    setIsRiseNumbersShrinking(false);
+    setShowFractionBar(false);
+    setShowSlopeText(false);
+    setIsNumbersMoving(false);
+    setShowExploreButton(false);
+    setShowInstructionText(false);
+    setIsDraggable(false);
+    setShowStaticNumbers(false);
+    setPoints([
+      { x: 2, y: 3 },
+      { x: 7, y: 11 }
+    ]);
+    setCurrentRise(8);
+    setCurrentRun(5);
+    setIsExploring(false);
+    setShowExplanation(false);
+    setIsExplanationShrinking(false);
+    setShowSecondContinue(false);
+    setIsDragging(false);
+    setDragIndex(null);
+    riseRef.current = 8;
+    runRef.current = 5;
+  };
 
   return (
     <div className="w-[464px] mx-auto mt-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.05)] bg-white rounded-lg select-none">
@@ -556,11 +610,44 @@ const Slope = () => {
           .move-rise-to-fraction {
             animation: moveRiseToFraction 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
+          .reset-button {
+            background-color: #5750E3;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+            margin-left: auto;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            line-height: 1;
+          }
+          .reset-button:hover {
+            background-color: #4a42c7;
+          }
+          .reset-button:disabled {
+            background-color: #5750E3;
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
         `}
       </style>
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-[#5750E3] text-sm font-medium select-none">Slope Explorer</h2>
+          <button 
+            className="reset-button"
+            onClick={handleReset}
+            title="Reset interactive"
+            disabled={isAnimating}
+          >
+            Reset
+          </button>
         </div>
 
         <div className="mt-4">
