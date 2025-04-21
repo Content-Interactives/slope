@@ -29,6 +29,7 @@ const Slope = () => {
   const [showFractionBar, setShowFractionBar] = useState(false);
   const [showSlopeText, setShowSlopeText] = useState(false);
   const [isNumbersMoving, setIsNumbersMoving] = useState(false);
+  const [isNumbersConverging, setIsNumbersConverging] = useState(false);
   const [showExploreButton, setShowExploreButton] = useState(false);
   const [showInstructionText, setShowInstructionText] = useState(false);
   const [isDraggable, setIsDraggable] = useState(false);
@@ -56,16 +57,28 @@ const Slope = () => {
   const runRef = useRef(5);
 
   const updateRiseAndRun = (newPoints) => {
-    const rise = newPoints[1].y - newPoints[0].y;
-    const run = Math.abs(newPoints[1].x - newPoints[0].x);
+    // Determine leftmost and rightmost points
+    const leftPoint = newPoints[0].x < newPoints[1].x ? newPoints[0] : newPoints[1];
+    const rightPoint = newPoints[0].x < newPoints[1].x ? newPoints[1] : newPoints[0];
+    
+    // Calculate rise based on the vertical displacement from left to right
+    const rise = rightPoint.y - leftPoint.y;
+    const run = Math.abs(rightPoint.x - leftPoint.x);
+    
     riseRef.current = rise;
     runRef.current = run;
     
     // Update the display directly
     const riseText = document.querySelector('text[fill="#ef4444"]');
     const runText = document.querySelector('text[fill="#3b82f6"]');
-    if (riseText) riseText.textContent = rise;
+    if (riseText) riseText.textContent = Math.abs(rise);
     if (runText) runText.textContent = run;
+
+    // Update the fraction display
+    const fractionRiseText = document.querySelector('text[fill="#ef4444"][text-anchor="middle"]');
+    if (fractionRiseText) {
+      fractionRiseText.textContent = rise < 0 ? `-${Math.abs(rise)}` : rise;
+    }
   };
 
   const handleClick = () => {
@@ -75,47 +88,27 @@ const Slope = () => {
     setTimeout(() => {
       setShowButton(false);
       
-      // Step 2: Show points and line
+      // Show points and main line
       setShowPoints(true);
       setTimeout(() => {
         setShowLine(true);
         
-        // Step 3: Show text and continue button
+        // Wait for line animation to complete before showing rise/run
         setTimeout(() => {
-          setShowText(true);
-          setTimeout(() => {
-            setShowContinue(true);
-            setIsAnimating(false);
-          }, 1500);
-        }, 700);
-      }, 800);
-    }, 300);
-  };
-
-  const handleContinue = () => {
-    setIsAnimating(true);
-    // Step 3: Shrink and remove initial text and continue button
-    setIsContinueShrinking(true);
-    setTimeout(() => {
-      setShowContinue(false);
-      setShowFullText(false);
-      setShowText(false);
-      
-      // Step 4: Show rise/run visualization
-      setTimeout(() => {
-        setShowHorizontalLine(true);
-        // Show run numbers sequentially
-        for (let i = 0; i < 5; i++) {
-          setTimeout(() => {
-            setShowRunNumbers(prev => {
-              const newState = [...prev];
-              newState[i] = true;
-              return newState;
-            });
-          }, i * 200);
-        }
-        setTimeout(() => {
+          setShowHorizontalLine(true);
           setShowVerticalLine(true);
+          
+          // Show run numbers sequentially
+          for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+              setShowRunNumbers(prev => {
+                const newState = [...prev];
+                newState[i] = true;
+                return newState;
+              });
+            }, i * 200);
+          }
+          
           // Show rise numbers sequentially
           for (let i = 0; i < 8; i++) {
             setTimeout(() => {
@@ -126,23 +119,53 @@ const Slope = () => {
               });
             }, i * 200);
           }
+          
+          // Show text and continue button
           setTimeout(() => {
-            setShowRunLabel(true);
-            setShowRiseLabel(true);
-            
-            // Step 5: Show explanation text
+            setShowText(true);
             setTimeout(() => {
-              setShowExplanation(true);
-              
-              // Step 6: Show second continue button
-              setTimeout(() => {
-                setShowSecondContinue(true);
-                setIsAnimating(false);
-              }, 500);
-            }, 500);
-          }, 800);
-        }, 800);
-      }, 500);
+              setShowContinue(true);
+              setIsAnimating(false);
+            }, 1500);
+          }, 700);
+        }, 800); // Added delay after line animation
+      }, 800);
+    }, 300);
+  };
+
+  const handleContinue = () => {
+    setIsAnimating(true);
+    // Shrink and remove initial text and continue button
+    setIsContinueShrinking(true);
+    setTimeout(() => {
+      setShowContinue(false);
+      setShowFullText(false);
+      setShowText(false);
+      
+      // Show slope text and fraction bar while keeping rise/run visible
+      setTimeout(() => {
+        setShowSlopeText(true);
+        setTimeout(() => {
+          setShowFractionBar(true);
+          
+          // First, trigger the convergence animation for extra numbers
+          setIsRunNumbersShrinking(true);
+          setIsRiseNumbersShrinking(true);
+          
+          // After convergence animation completes, show only the last numbers
+          setTimeout(() => {
+            setShowRunNumbers([false, false, false, false, true]);
+            setShowRiseNumbers([false, false, false, false, false, false, false, true]);
+            
+            // Then trigger the move animation for the last numbers
+            setIsNumbersMoving(true);
+            setTimeout(() => {
+              setShowExploreButton(true);
+              setIsAnimating(false);
+            }, 1000);
+          }, 500);
+        }, 300);
+      }, 200);
     }, 500);
   };
 
@@ -355,6 +378,7 @@ const Slope = () => {
             background-color: #5750E3;
             transform: translate(-50%, -50%);
             transition: background-color 0.3s ease;
+            z-index: 20;
           }
           @keyframes growPoint {
             from {
@@ -504,24 +528,52 @@ const Slope = () => {
             }
           }
           @keyframes runNumberExit {
-            from {
-              transform: translateY(0);
+            0% {
+              transform: scale(1);
               opacity: 1;
             }
-            to {
-              transform: translateY(20px);
+            100% {
+              transform: scale(0);
               opacity: 0;
             }
           }
+          .run-number-exit {
+            animation: runNumberExit 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
           @keyframes riseNumberExit {
-            from {
-              transform: translateX(0);
+            0% {
+              transform: scale(1);
               opacity: 1;
             }
-            to {
-              transform: translateX(20px);
+            100% {
+              transform: scale(0);
               opacity: 0;
             }
+          }
+          .rise-number-exit {
+            animation: riseNumberExit 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+          @keyframes numberFadeOut {
+            0% {
+              transform: scale(1) translate(0, 0);
+              opacity: 1;
+            }
+            30% {
+              transform: scale(0.9) translate(0, 0);
+              opacity: 0.8;
+            }
+            60% {
+              transform: scale(0.7) translate(0, 0);
+              opacity: 0.4;
+            }
+            100% {
+              transform: scale(0.5) translate(0, 0);
+              opacity: 0;
+            }
+          }
+          .number-fade-out {
+            animation: numberFadeOut 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            pointer-events: none;
           }
           @keyframes fractionBarAppear {
             from {
@@ -535,12 +587,6 @@ const Slope = () => {
           }
           .text-shrink {
             animation: shrinkText 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-          }
-          .run-number-exit {
-            animation: runNumberExit 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-          }
-          .rise-number-exit {
-            animation: riseNumberExit 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
           .fraction-bar {
             animation: fractionBarAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -601,6 +647,26 @@ const Slope = () => {
               opacity: 1;
             }
           }
+          @keyframes convergeRunNumbers {
+            from {
+              transform: translate(0, 0) scale(1);
+              opacity: 1;
+            }
+            to {
+              transform: translate(80px, 0) scale(1.2);
+              opacity: 0;
+            }
+          }
+          @keyframes convergeRiseNumbers {
+            from {
+              transform: translate(0, 0) scale(1);
+              opacity: 1;
+            }
+            to {
+              transform: translate(0, -80px) scale(1.2);
+              opacity: 0;
+            }
+          }
           .move-to-fraction {
             animation: moveToFraction 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
@@ -609,6 +675,12 @@ const Slope = () => {
           }
           .move-rise-to-fraction {
             animation: moveRiseToFraction 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+          .converge-run-numbers {
+            animation: convergeRunNumbers 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+          .converge-rise-numbers {
+            animation: convergeRiseNumbers 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
           .reset-button {
             background-color: #5750E3;
@@ -646,6 +718,19 @@ const Slope = () => {
           .flash-animation {
             animation: flashPoint 0.3s ease-in-out 3;
           }
+          @keyframes exploreNumberAppear {
+            0% {
+              transform: scale(0);
+              opacity: 0;
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          .explore-number-appear {
+            animation: exploreNumberAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
         `}
       </style>
       <div className="p-4">
@@ -676,7 +761,7 @@ const Slope = () => {
                   Click to Explore!
                 </button>
               )}
-              <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+              <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
                 {showLine && (
                   <line 
                     x1={x1} 
@@ -691,10 +776,10 @@ const Slope = () => {
                 )}
                 {showHorizontalLine && (
                   <line 
-                    x1={x1} 
-                    y1={y1} 
-                    x2={x2} 
-                    y2={y1} 
+                    x1={Math.min(x1, x2)} 
+                    y1={points[0].x < points[1].x ? y1 : y2} 
+                    x2={Math.max(x1, x2)} 
+                    y2={points[0].x < points[1].x ? y1 : y2} 
                     stroke="#3b82f6" 
                     strokeWidth="2"
                     className="horizontal-line-animation"
@@ -703,10 +788,10 @@ const Slope = () => {
                 )}
                 {showVerticalLine && (
                   <line 
-                    x1={x2} 
-                    y1={y1} 
-                    x2={x2} 
-                    y2={y2} 
+                    x1={Math.max(x1, x2)} 
+                    y1={Math.min(y1, y2)} 
+                    x2={Math.max(x1, x2)} 
+                    y2={Math.max(y1, y2)} 
                     stroke="#ef4444" 
                     strokeWidth="2"
                     className="horizontal-line-animation"
@@ -743,7 +828,9 @@ const Slope = () => {
                       y={y1 + 16}
                       fill="#3b82f6"
                       className={`text-sm font-bold ${isRunNumbersShrinking && index !== 4 ? 'run-number-exit' : isNumbersMoving && index === 4 ? 'move-run-to-fraction' : !isRunNumbersShrinking ? 'fade-in-right' : ''}`}
-                      style={{ transformOrigin: `${x1 + (index + 0.5) * 20}px ${y1 + 25}px` }}
+                      style={{ 
+                        transformOrigin: `${x1 + (index + 0.5) * 20}px ${y1 + 16}px`
+                      }}
                     >
                       {isExploring && index === 4 ? currentRun : index + 1}
                     </text>
@@ -757,12 +844,40 @@ const Slope = () => {
                       y={y2 - (index * 20) + 156}
                       fill="#ef4444"
                       className={`text-sm font-bold ${isRiseNumbersShrinking && index !== 7 ? 'rise-number-exit' : isNumbersMoving && index === 7 ? 'move-rise-to-fraction' : !isRiseNumbersShrinking ? 'fade-in-right' : ''}`}
-                      style={{ transformOrigin: `${x2 + 15}px ${y2 - (index * 20) + 10}px` }}
+                      style={{ 
+                        transformOrigin: isRiseNumbersShrinking && index !== 7 ? `${x2 + 7}px ${y2 - (index * 20) + 156}px` : `${x2 + 15}px ${y2 - (index * 20) + 10}px`
+                      }}
                     >
                       {isExploring && index === 7 ? currentRise : index + 1}
                     </text>
                   )
                 ))}
+                {isExploring && (
+                  <>
+                    <text
+                      x={Math.min(x1, x2) + Math.abs(x2 - x1) / 2}
+                      y={points[0].x < points[1].x ? y1 : y2}
+                      fill="#3b82f6"
+                      className="text-sm font-bold explore-number-appear"
+                      textAnchor="middle"
+                      dy="20"
+                      style={{ transformOrigin: 'center' }}
+                    >
+                      {runRef.current}
+                    </text>
+                    <text
+                      x={Math.max(x1, x2)}
+                      y={Math.min(y1, y2) + Math.abs(y2 - y1) / 2}
+                      fill="#ef4444"
+                      className="text-sm font-bold explore-number-appear"
+                      textAnchor="middle"
+                      dx="20"
+                      style={{ transformOrigin: 'center' }}
+                    >
+                      {riseRef.current}
+                    </text>
+                  </>
+                )}
               </svg>
               {showPoints && (
                 <>
@@ -789,7 +904,7 @@ const Slope = () => {
                 </>
               )}
               {showSlopeText && (
-                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 fade-in-down text-center`}>
+                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 fade-in-down text-center`} style={{ zIndex: 1 }}>
                   <div>
                     {showInstructionText ? (
                       <>
@@ -844,18 +959,18 @@ const Slope = () => {
                 </div>
               )}
               {showText && (
-                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 ${isContinueShrinking ? 'text-shrink' : 'text-animation'} text-center`}>
+                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 ${isContinueShrinking ? 'text-shrink' : 'text-animation'} text-center`} style={{ zIndex: 1 }}>
                   <div>
                     {showFullText ? (
                       <span>
-                        Here we have a line.
+                        Here we have a line with its <span className="font-bold text-red-500">rise</span> and <span className="font-bold text-blue-500">run</span> displayed.
                       </span>
                     ) : null}
                   </div>
                 </div>
               )}
               {showExplanation && (
-                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 ${isExplanationShrinking ? 'text-shrink' : 'fade-in-down'} text-center`}>
+                <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 ${isExplanationShrinking ? 'text-shrink' : 'fade-in-down'} text-center`} style={{ zIndex: 1 }}>
                   <div>
                     Slope is defined as a line's <span className="font-bold text-red-500">rise</span> over <span className="font-bold text-blue-500">run</span>.
                   </div>
@@ -897,3 +1012,4 @@ const Slope = () => {
 };
 
 export default Slope;
+
