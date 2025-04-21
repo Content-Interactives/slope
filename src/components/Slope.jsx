@@ -635,6 +635,17 @@ const Slope = () => {
             opacity: 0.5;
             cursor: not-allowed;
           }
+          @keyframes flashPoint {
+            0%, 100% {
+              background-color: #5750E3;
+            }
+            50% {
+              background-color: #FFB066;
+            }
+          }
+          .flash-animation {
+            animation: flashPoint 0.3s ease-in-out 3;
+          }
         `}
       </style>
       <div className="p-4">
@@ -756,7 +767,7 @@ const Slope = () => {
               {showPoints && (
                 <>
                   <div 
-                    className={`point ${isDraggable ? 'point-color-change' : (showPoints ? 'point-animation' : '')} ${isDraggable ? 'cursor-move' : ''}`}
+                    className={`point ${isDraggable ? 'point-color-change' : (showPoints ? 'point-animation' : '')} ${isDraggable ? 'cursor-move' : ''} ${isDraggable ? 'flash-animation' : ''}`}
                     style={{ 
                       left: `${points[0].x * 20}px`,
                       top: `${(13 - points[0].y) * 20}px`,
@@ -766,7 +777,7 @@ const Slope = () => {
                     onTouchStart={(e) => handlePointDrag(0, e.touches[0])}
                   />
                   <div 
-                    className={`point ${isDraggable ? 'point-color-change' : (showPoints ? 'point-animation' : '')} ${isDraggable ? 'cursor-move' : ''}`}
+                    className={`point ${isDraggable ? 'point-color-change' : (showPoints ? 'point-animation' : '')} ${isDraggable ? 'cursor-move' : ''} ${isDraggable ? 'flash-animation' : ''}`}
                     style={{ 
                       left: `${points[1].x * 20}px`,
                       top: `${(13 - points[1].y) * 20}px`,
@@ -837,22 +848,16 @@ const Slope = () => {
                   <div>
                     {showFullText ? (
                       <span>
-                        Here we have a line between two points. A <span className="font-bold text-[#5750E3]">slope</span> is what describes how steep a line is in terms of{" "}
+                        Here we have a line.
                       </span>
                     ) : null}
-                    <span className="inline-flex items-center">
-                      <span className="font-bold text-red-500">rise</span>
-                      <span className="slash"></span>
-                      <span className="font-bold text-blue-500">run</span>
-                    </span>
-                    {showFullText ? "." : null}
                   </div>
                 </div>
               )}
               {showExplanation && (
                 <div className={`absolute top-4 right-4 w-[180px] text-sm text-gray-600 ${isExplanationShrinking ? 'text-shrink' : 'fade-in-down'} text-center`}>
                   <div>
-                    <span className="font-bold text-red-500">Rise</span> is the vertical displacement between two points on a line while <span className="font-bold text-blue-500">run</span> is the horizontal displacement between those two points.
+                    Slope is defined as a line's <span className="font-bold text-red-500">rise</span> over <span className="font-bold text-blue-500">run</span>.
                   </div>
                 </div>
               )}
