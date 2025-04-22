@@ -147,27 +147,28 @@ const Slope = () => {
       
       // Show slope text and fraction bar while keeping rise/run visible
       setTimeout(() => {
-        setShowSlopeText(true);
+        setShowFractionBar(true);
+        
+        // First, trigger the convergence animation for extra numbers
+        setIsRunNumbersShrinking(true);
+        setIsRiseNumbersShrinking(true);
+        
+        // After convergence animation completes, show only the last numbers
         setTimeout(() => {
-          setShowFractionBar(true);
+          setShowRunNumbers([false, false, false, false, true]);
+          setShowRiseNumbers([false, false, false, false, false, false, false, true]);
           
-          // First, trigger the convergence animation for extra numbers
-          setIsRunNumbersShrinking(true);
-          setIsRiseNumbersShrinking(true);
-          
-          // After convergence animation completes, show only the last numbers
+          // Then trigger the move animation for the last numbers
+          setIsNumbersMoving(true);
           setTimeout(() => {
-            setShowRunNumbers([false, false, false, false, true]);
-            setShowRiseNumbers([false, false, false, false, false, false, false, true]);
-            
-            // Then trigger the move animation for the last numbers
-            setIsNumbersMoving(true);
+            // Show the slope text after the numbers have moved
+            setShowSlopeText(true);
             setTimeout(() => {
               setShowExploreButton(true);
               setIsAnimating(false);
             }, 1000);
-          }, 500);
-        }, 300);
+          }, 800); // Wait for the move animation to complete
+        }, 500);
       }, 200);
     }, 500);
   };
@@ -760,7 +761,7 @@ const Slope = () => {
 
         <div className="space-y-4">
           {/* Visual Section */}
-          <div className="w-[400px] mx-auto bg-white border border-[#5750E3]/30 rounded-md overflow-hidden">
+          <div className="w-[400px] mx-auto bg-white border border-[#5750E3]/30 rounded-md overflow-hidden relative">
             <div 
               ref={gridRef}
               className="relative w-[400px] h-[260px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAyMCAwIEwgMCAwIDAgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2U1ZTVlNSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')]"
@@ -842,7 +843,7 @@ const Slope = () => {
                       fill="#3b82f6"
                       className={`text-sm font-bold ${isRunNumbersShrinking && index !== 4 ? 'run-number-exit' : isNumbersMoving && index === 4 ? 'move-run-to-fraction' : !isRunNumbersShrinking ? 'fade-in-right' : ''}`}
                       style={{ 
-                        transformOrigin: `${x1 + (index + 0.5) * 20}px ${y1 + 16}px`,
+                        transformOrigin: `${x1 + (index + 0.5) * 20 - 2}px ${y1 + 8}px`,
                         position: isExploring ? 'absolute' : 'static',
                         left: isExploring ? '164px' : 'auto',
                         top: isExploring ? '-90px' : 'auto',
@@ -862,9 +863,9 @@ const Slope = () => {
                       fill="#ef4444"
                       className={`text-sm font-bold ${isRiseNumbersShrinking && index !== 7 ? 'rise-number-exit' : isNumbersMoving && index === 7 ? 'move-rise-to-fraction' : !isRiseNumbersShrinking ? 'fade-in-right' : ''}`}
                       style={{ 
-                        transformOrigin: isRiseNumbersShrinking && index !== 7 ? `${x2 + 7}px ${y2 - (index * 20) + 156}px` : `${x2 + 15}px ${y2 - (index * 20) + 10}px`,
+                        transformOrigin: isRiseNumbersShrinking && index !== 7 ? `${x2 + 7}px ${y2 - (index * 20) + 156}px` : `${x2 + 13}px ${y2 - (index * 20) + 10}px`,
                         position: isExploring ? 'absolute' : 'static',
-                        left: isExploring ? '145px' : 'auto',
+                        left: isExploring ? '135px' : 'auto',
                         top: isExploring ? '-45px' : 'auto',
                         transform: isExploring ? 'scale(1.5)' : 'none'
                       }}
@@ -955,7 +956,7 @@ const Slope = () => {
           </div>
 
           {/* Text Section */}
-          <div className="w-[400px] mx-auto bg-white border border-[#5750E3]/30 rounded-md p-4 min-h-[55px]">
+          <div className="w-[400px] mx-auto bg-white border border-[#5750E3]/30 rounded-md p-4 min-h-[55px] relative">
             {showText && (
               <div className={`text-sm text-gray-600 ${isContinueShrinking ? 'text-shrink' : 'fade-in-down'} text-center`}>
                 <div>
@@ -997,7 +998,7 @@ const Slope = () => {
               </div>
             )}
             {showFractionBar && (
-              <div className="absolute top-36 right-32 w-[172px] h-20 pb-6" style={{ zIndex: 1 }}>
+              <div className="absolute top-0 -right-20 w-[172px] h-20 pb-6" style={{ zIndex: 1, transform: 'translateY(-255%) translateX(-51%)' }}>
                 <svg className="w-full h-full" viewBox="0 0 200 100">
                   <line
                     x1="60"
@@ -1012,8 +1013,8 @@ const Slope = () => {
                   {showStaticNumbers && (
                     <>
                       <text
-                        x="102"
-                        y="97"
+                        x="98"
+                        y="99"
                         fill="#3b82f6"
                         className="text-lg font-bold"
                         style={{ fontSize: '2.3rem' }}
@@ -1022,8 +1023,8 @@ const Slope = () => {
                         {isExploring ? runRef.current : 5}
                       </text>
                       <text
-                        x="102"
-                        y="32"
+                        x="99"
+                        y="27"
                         fill="#ef4444"
                         className="text-lg font-bold"
                         style={{ fontSize: '2.3rem' }}
