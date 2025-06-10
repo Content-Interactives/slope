@@ -696,7 +696,7 @@ const Slope = () => {
             animation: convergeRiseNumbers 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
           .reset-button {
-            background-color: #5750E3;
+            background-color: #6B7280;
             color: white;
             border: none;
             border-radius: 0.25rem;
@@ -713,10 +713,10 @@ const Slope = () => {
             line-height: 1;
           }
           .reset-button:hover {
-            background-color: #4a42c7;
+            background-color: #4B5563;
           }
           .reset-button:disabled {
-            background-color: #5750E3;
+            background-color: #6B7280;
             opacity: 0.5;
             cursor: not-allowed;
           }
@@ -744,6 +744,93 @@ const Slope = () => {
           .explore-number-appear {
             animation: exploreNumberAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
+          @property --r {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+          }
+
+          .simple-glow { 
+            background: conic-gradient(
+              from var(--r),
+              transparent 0%,
+              rgb(0, 255, 132) 2%,
+              rgb(0, 214, 111) 8%,
+              rgb(0, 174, 90) 12%,
+              rgb(0, 133, 69) 14%,
+              transparent 15%
+            );
+            animation: rotating 3s linear infinite;
+            transition: animation 0.3s ease;
+          }
+
+          .simple-glow.stopped {
+            animation: none;
+            background: none;
+          }
+
+          .simple-glow.delayed-glow {
+            animation: none;
+            background: none;
+          }
+
+          .simple-glow.delayed-glow.active {
+            animation: rotating 3s linear infinite;
+            background: conic-gradient(
+              from var(--r),
+              transparent 0%,
+              rgb(0, 255, 132) 2%,
+              rgb(0, 214, 111) 8%,
+              rgb(0, 174, 90) 12%,
+              rgb(0, 133, 69) 14%,
+              transparent 15%
+            );
+          }
+
+          @keyframes rotating {
+            0% {
+              --r: 0deg;
+            }
+            100% {
+              --r: 360deg;
+            }
+          }
+          .explore-button {
+            background-color: #008545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+          }
+          .explore-button:hover {
+            background-color: #00783E;
+          }
+          .glow-button { 
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            transition: all .3s ease;
+            padding: 7px;
+          }
+          .glow-button::before {
+            content: "";
+            display: block;
+            position: absolute;
+            background: #fff;
+            inset: 2px;
+            border-radius: 4px;
+            z-index: -2;
+          }
         `}
       </style>
       <div className="p-4">
@@ -767,13 +854,15 @@ const Slope = () => {
               className="relative w-[400px] h-[260px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAyMCAwIEwgMCAwIDAgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2U1ZTVlNSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')]"
             >
               {showButton && (
-                <button 
-                  className={`absolute bottom-4 right-4 px-3 py-1.5 bg-[#5750E3] text-white text-sm rounded-full hover:bg-[#4a42c7] transition-colors duration-200 select-none ${isButtonShrinking ? 'shrink-animation' : ''}`}
-                  onClick={handleClick}
-                  style={{ transformOrigin: 'center' }}
-                >
-                  Click to Explore!
-                </button>
+                <div className={`glow-button ${isButtonShrinking ? 'simple-glow stopped' : 'simple-glow'}`}>
+                  <button 
+                    className={`explore-button select-none ${isButtonShrinking ? 'shrink-animation' : ''}`}
+                    onClick={handleClick}
+                    style={{ transformOrigin: 'center' }}
+                  >
+                    Click to Explore!
+                  </button>
+                </div>
               )}
               <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
                 {showLine && (
@@ -926,31 +1015,37 @@ const Slope = () => {
                 </>
               )}
               {showContinue && (
-                <button 
-                  className={`absolute bottom-4 right-4 px-3 py-1.5 bg-[#5750E3] text-white text-sm rounded-full hover:bg-[#4a42c7] transition-colors duration-200 select-none ${isContinueShrinking ? 'shrink-animation' : 'continue-animation'}`}
-                  onClick={handleContinue}
-                  style={{ transformOrigin: 'center' }}
-                >
-                  Continue
-                </button>
+                <div className={`glow-button ${isContinueShrinking ? 'simple-glow stopped' : 'simple-glow'}`}>
+                  <button 
+                    className={`explore-button select-none ${isContinueShrinking ? 'shrink-animation' : 'continue-animation'}`}
+                    onClick={handleContinue}
+                    style={{ transformOrigin: 'center' }}
+                  >
+                    Continue
+                  </button>
+                </div>
               )}
               {showSecondContinue && (
-                <button 
-                  className="absolute bottom-4 right-4 px-3 py-1.5 bg-[#5750E3] text-white text-sm rounded-full hover:bg-[#4a42c7] transition-colors duration-200 select-none continue-animation"
-                  onClick={handleSecondContinue}
-                  style={{ transformOrigin: 'center' }}
-                >
-                  Continue
-                </button>
+                <div className={`glow-button simple-glow`}>
+                  <button 
+                    className="explore-button select-none continue-animation"
+                    onClick={handleSecondContinue}
+                    style={{ transformOrigin: 'center' }}
+                  >
+                    Continue
+                  </button>
+                </div>
               )}
               {showExploreButton && (
-                <button 
-                  className={`absolute bottom-4 right-4 px-3 py-1.5 bg-[#5750E3] text-white text-sm rounded-full hover:bg-[#4a42c7] transition-colors duration-200 select-none ${isExploreButtonShrinking ? 'shrink-animation' : 'continue-animation'}`}
-                  onClick={handleExploreClick}
-                  style={{ transformOrigin: 'center' }}
-                >
-                  Explore more slopes!
-                </button>
+                <div className={`glow-button ${isExploreButtonShrinking ? 'simple-glow stopped' : 'simple-glow'}`}>
+                  <button 
+                    className={`explore-button select-none ${isExploreButtonShrinking ? 'shrink-animation' : 'continue-animation'}`}
+                    onClick={handleExploreClick}
+                    style={{ transformOrigin: 'center' }}
+                  >
+                    Explore more slopes!
+                  </button>
+                </div>
               )}
             </div>
           </div>
